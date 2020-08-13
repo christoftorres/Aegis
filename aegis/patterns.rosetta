@@ -1,0 +1,23 @@
+// Detect reentrancy
+Description: "Reentrancy"
+Condition: ((((opcode == "CALL") ==> (opcode == "CALL") where (((src.stack(1) == dst.stack(1)) && (src.address == dst.address)) && (src.pc == dst.pc))) --> (opcode == "SSTORE")) --> (opcode == "SSTORE") where (((src.stack(0) == dst.stack(0)) && (src.address == dst.address)) && (src.depth > dst.depth)))
+
+// Detect cross-function reentrancy
+Description: "Cross-Function Reentrancy"
+Condition: ((((opcode == "CALL") ==> (opcode == "CALL") where (((src.stack(1) == dst.stack(1)) && (src.address == dst.address)) && (src.memory(src.stack(3), src.stack(4)) != dst.memory(dst.stack(3), dst.stack(4))))) --> (opcode == "SSTORE")) --> (opcode == "SSTORE") where (((src.stack(0) == dst.stack(0)) && (src.address == dst.address)) && (src.depth > dst.depth)))
+
+// Detect delegated reentrancy
+Description: "Delegated Reentrancy"
+Condition: ((((opcode in ["DELEGATECALL", "CALLCODE"]) ==> (opcode in ["DELEGATECALL", "CALLCODE"]) where (((src.stack(1) == dst.stack(1)) && (src.address == dst.address)) && (src.pc == dst.pc))) --> (opcode == "SSTORE")) --> (opcode == "SSTORE") where (((src.stack(0) == dst.stack(0)) && (src.address == dst.address)) && (src.depth > dst.depth)))
+
+// Detect create-based reentrancy
+Description: "Create-Based Reentrancy"
+Condition: ((((opcode == "CREATE") ==> (opcode == "CREATE") where (((src.stack(1) == dst.stack(1)) && (src.address == dst.address)) && (src.pc == dst.pc))) --> (opcode == "SSTORE")) --> (opcode == "SSTORE") where (((src.stack(0) == dst.stack(0)) && (src.address == dst.address)) && (src.depth > dst.depth)))
+
+// Detect Parity Wallet Hack 1
+Description: "Parity Wallet Hack 1"
+Condition: (((((opcode == "DELEGATECALL") ==> (opcode == "CALLDATACOPY")) ~~> (opcode == "SSTORE")) ~~> (opcode == "JUMPI") where (src.transaction.hash != dst.transaction.hash)) --> ((opcode == "CALLDATALOAD") ~~> (opcode == "CALL") where (dst.stack(2) > 0)))
+
+// Detect Parity Wallet Hack 2
+Description: "Parity Wallet Hack 2"
+Condition: ((((opcode == "CALLDATACOPY") ~~> (opcode == "SSTORE")) ~~> (opcode == "JUMPI") where (src.transaction.hash != dst.transaction.hash)) --> ((opcode == "CALLDATALOAD") ~~> (opcode in ["SUICIDE", "SELFDESTRUCT"])))

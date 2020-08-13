@@ -1,0 +1,33 @@
+Model: patterns*=Pattern | Comment;
+
+Pattern: 'Description' ':' description=STRING
+         'Condition'   ':' condition=Condition;
+
+Comment: /\/\/.*$/;
+
+Condition: Equal | NotEqual | GreaterThan | LessThan | GreaterOrEqual | LessOrEqual | In | Relation | BooleanAnd;
+
+LessThan:          '(' (x=Execution | x=Source | x=Destination | x=INT) '<'  (y=Execution | y=Source | y=Destination | y=INT) ')';
+GreaterThan:       '(' (x=Execution | x=Source | x=Destination | x=INT) '>'  (y=Execution | y=Source | y=Destination | y=INT) ')';
+LessOrEqual:       '(' (x=Execution | x=Source | x=Destination | x=INT) '<=' (y=Execution | y=Source | y=Destination | y=INT) ')';
+GreaterOrEqual:    '(' (x=Execution | x=Source | x=Destination | x=INT) '>=' (y=Execution | y=Source | y=Destination | y=INT) ')';
+
+Equal:             '(' (x=Execution | x=Source | x=Destination | x=INT | x=STRING) '==' (y=Execution | y=Source | y=Destination | y=INT | y=STRING) ')';
+NotEqual:          '(' (x=Execution | x=Source | x=Destination | x=INT | x=STRING) '!=' (y=Execution | y=Source | y=Destination | y=INT | y=STRING) ')';
+
+In:                '(' element=Execution 'in' '[' (elements+=STRING[','])? ']' ')';
+
+Execution:         ('opcode' | 'depth' | 'pc' | 'address' | Stack | Memory | Transaction);
+Stack:             'stack' '(' index=INT ')';
+Memory:            'memory' '(' (offset=Source | offset=Destination | offset=INT) ',' (size=Source | size=Destination | size=INT) ')';
+Transaction:       'transaction' '.' ('hash' | 'value' | 'from' | 'to');
+
+Source:            'src' '.' property=Execution;
+Destination:       'dst' '.' property=Execution;
+
+Relation:          ControlDependency | DataDependency | Follows;
+ControlDependency: '(' source=Condition '==>' destination=Condition ('where' condition=Condition)? ')';
+DataDependency:    '(' source=Condition '~~>' destination=Condition ('where' condition=Condition)? ')';
+Follows:           '(' source=Condition '-->' destination=Condition ('where' condition=Condition)? ')';
+
+BooleanAnd:        '(' x=Condition '&&' y=Condition ')';
